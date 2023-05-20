@@ -233,20 +233,14 @@
     	    return false;
     	  }
     	}
-    	function hideSearch() {
-    	    document.querySelector(".search-wrapper").style.display = "none";
-    	}
         function fetchURL() {
-            var url = document.getElementById("urlInput").value;
+            var url = document.getElementById("urlInput").value.split(' ').join('-');
             if (isValidHttpUrl(url)) {
-                fullURL = window.location.href + "/fetch?url=" + url;
+                fullURL = window.location.href + "fetch?url=" + url;
             } else {
-                fullURL = window.location.href + "/fetch?url=https://google.com/search?q=" + url;
+                fullURL = window.location.href + "fetch?url=https://google.com/search?q=" + url;
             }
-            var iframe = document.createElement("iframe");
-            iframe.id = "proxy-iframe";
-            iframe.src = fullURL;
-            document.body.appendChild(iframe);
+            window.open(fullURL, '_blank');
         }
     </script>
 </head>
@@ -259,7 +253,6 @@
 	</button>-->
 	<div class="search-wrapper">
 	    <div class="input-holder">
-	    	<button class="search-icon-2" onclick="hideSearch();">✖</button>
 	        <input type="text" class="search-input" id="urlInput" placeholder="Search google" />
 	        <button class="search-icon" onclick="fetchURL();"><span></span></button>
 	    </div>
