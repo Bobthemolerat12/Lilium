@@ -58,24 +58,13 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	modifiedHTML := modifyHTMLLinks(fetchedHTML, currentURL, urlParam)
 
 	// Send the modified HTML
+  w.Header().Set("Origin", urlParam)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "*")
 	w.Header().Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
 	fmt.Fprint(w, modifiedHTML)
 }
 
-func mainPage(w http.ResponseWriter, r *http.Request) {
-    // Create a file server that serves static files from the "static" directory
-    fs := http.FileServer(http.Dir("static"))
-
-    // Serve the "index.html" file located in the "static" directory
-    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "static/index.html")
-    })
-
-    // Serve all other static files from the file server
-    http.Handle("/static/", http.StripPrefix("/static/", fs))
-}
 
 func fetchHTML(urlParam string) (string, error) {
 	req, err := http.NewRequest("GET", urlParam, nil)
@@ -84,6 +73,7 @@ func fetchHTML(urlParam string) (string, error) {
 	}
 
 	client := &http.Client{}
+  req.Header.Set("Origin", urlParam)
 	req.Header.Set("Access-Control-Allow-Origin", "*")
 	req.Header.Set("Access-Control-Allow-Methods", "*")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
@@ -246,7 +236,8 @@ func modifyHTMLLinks(html, currentURL, originalURL string) string {
 	            if !strings.HasPrefix(modifiedURL, "http://") && !strings.HasPrefix(modifiedURL, "https://") {
 	                modifiedURL = currentScheme + "://" + modifiedURL
 	            }
-	            s.SetAttr("src", modifiedURL)
+              fetchURL := fmt.Sprintf("%s/fetch?url=%s", currentURL, url.QueryEscape(modifiedURL))
+	            s.SetAttr("src", fetchURL)
 	        }
 	    }
 	})
@@ -306,11 +297,7 @@ func modifyURL(link, currentURL, originalURL string) string {
 
 
 func getCurrentURL(r *http.Request) string {
-	proto := "http"
-	if r.TLS != nil {
-		proto = "https"
-	}
-
+	proto := "https"
 	host := r.Host
 	return fmt.Sprintf("%s://%s", proto, host)
 }
@@ -324,7 +311,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Add support for both http:// and https:// schemes
 	if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-		urlParam = "http://" + urlParam
+		urlParam = "https://" + urlParam
 	}
 
 	parsedURL, err := url.Parse(urlParam)
@@ -342,6 +329,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36")
 	req.Header.Set("Access-Control-Allow-Origin", "*")
 	req.Header.Set("Access-Control-Allow-Methods", "*")
+  req.Header.Set("Origin", urlParam)
 
 	resp, err := client.Do(req)
 	if err != nil {
