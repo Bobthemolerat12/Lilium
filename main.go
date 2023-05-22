@@ -12,6 +12,7 @@ import (
 	"time"
 	"bytes"
 	"regexp"
+	"github.com/DaRealFreak/cloudflare-bp-go"
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -126,6 +127,7 @@ func fetchHTML(urlParam string) (string, error) {
 	}
 
 	client := &http.Client{}
+	client.Transport = cloudflarebp.AddCloudFlareByPass(client.Transport)
   	req.Header.Set("Origin", urlParam)
 	req.Header.Set("Access-Control-Allow-Origin", "*")
 	req.Header.Set("Access-Control-Allow-Methods", "*")
@@ -427,6 +429,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &http.Client{}
+	client.Transport = cloudflarebp.AddCloudFlareByPass(client.Transport)
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
