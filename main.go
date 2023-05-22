@@ -221,7 +221,7 @@ func modifyHTMLLinks(html, currentURL, originalURL string) string {
 		return resolvedURL.String()
 	}
 
-	doc.Find("a[href], link[href], script[src], img[src], meta[content]").Each(func(i int, s *goquery.Selection) {
+	doc.Find("a[href], link[href], script[src], img[src], meta[content], iframe[src]").Each(func(i int, s *goquery.Selection) {
 	    if attr, exists := s.Attr("href"); exists {
 	        if s.Is("link") && (s.AttrOr("rel", "") == "icon" || s.AttrOr("rel", "") == "shortcut icon") {
 	            // Handle favicon links
@@ -281,7 +281,7 @@ func modifyHTMLLinks(html, currentURL, originalURL string) string {
 	    }
 
 	    if attr, exists := s.Attr("meta"); exists {
-	    	if s.Is("meta") {
+	    	if s.Is("content") {
 	    	    // Handle meta images
 				modifiedURL := modifyURL(attr)
 
@@ -292,6 +292,28 @@ func modifyHTMLLinks(html, currentURL, originalURL string) string {
 	    	    s.SetAttr("content", fetchURL)
 	        } else {
 	            // Handle other meta links
+				modifiedURL := modifyURL(attr)
+
+	            if !strings.HasPrefix(modifiedURL, "http://") && !strings.HasPrefix(modifiedURL, "https://") {
+	                modifiedURL = currentScheme + "://" + modifiedURL
+	            }
+	            fetchURL := fmt.Sprintf("%s/fetch?url=%s", currentURL, url.QueryEscape(modifiedURL))
+	            s.SetAttr("href", fetchURL)
+	        }
+	    }
+
+		if attr, exists := s.Attr("src"); exists {
+	    	if s.Is("iframe") {
+	    	    // Handle iframe
+				modifiedURL := modifyURL(attr)
+
+	    	    if !strings.HasPrefix(modifiedURL, "http://") && !strings.HasPrefix(modifiedURL, "https://") {
+	    	        modifiedURL = currentScheme + "://" + modifiedURL
+	    	    }
+	    	    fetchURL := fmt.Sprintf("%s/fetch?url=%s", currentURL, url.QueryEscape(modifiedURL))
+	    	    s.SetAttr("content", fetchURL)
+	        } else {
+	            // Handle other iframe links
 				modifiedURL := modifyURL(attr)
 
 	            if !strings.HasPrefix(modifiedURL, "http://") && !strings.HasPrefix(modifiedURL, "https://") {
